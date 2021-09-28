@@ -1,3 +1,26 @@
+variable "whitelist" {
+  type = list(string)
+}
+variable web_image_id {
+   type = string
+}
+variable "web_instance_type" {
+  type = string
+}
+variable "web_desired_capacity" {
+  type = number
+}
+variable "web_max_size" {
+  type = number
+}
+variable "web_min_size" {
+  type = number
+}
+
+
+
+
+
 //provider is always needed so than terraform knows where to go
 // for resources to be created
 provider "aws" {
@@ -37,8 +60,7 @@ resource "aws_security_group" "prod_web" {
     from_port = 80
     protocol = "tcp"
     to_port = 80
-    cidr_blocks = [
-      "0.0.0.0/0"]
+    cidr_blocks = var.whitelist
     // use an actual IP address here
   }
   ingress {
@@ -90,8 +112,8 @@ resource "aws_elb" "prod_web" {
 
 resource "aws_launch_template" "prod_web" {
   name_prefix    = "prod-web"
-  image_id       = "ami-091dc5ac6b1d84e27"
-  instance_type  = "t2.nano"
+  image_id       = var.web_image_id
+  instance_type  = var.web_instance_type
   tags = {
     "Terraform" : "true"
     // which resources are managed by Terraform helps with things like that
@@ -101,12 +123,10 @@ resource "aws_launch_template" "prod_web" {
 
 resource "aws_autoscaling_group" "prod_web" {
   name = "foobar3-terraform-test"
-  desired_capacity = 1
-  max_size = 1
-  min_size = 1
-//  availability_zones = [
-//    "us-west-2a",
-//    "us-west-2b"]
+  desired_capacity = var.web_desired_capacity
+  max_size = var.web_max_size
+  min_size = var.web_min_size
+
   health_check_grace_period = 300
   health_check_type = "ELB"
   force_delete = true
